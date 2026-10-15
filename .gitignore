@@ -22,6 +22,8 @@ __pycache__/
 /web/tests/*.png
 /test-results/
 /playwright-report/
-/tools/macos-macro/
+/tools/macos-macro/build/
+/outputs
+/sprite-media
 
 # web/dist is the deployable game, including engine.js/.wasm/.data.

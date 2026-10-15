@@ -85,7 +85,7 @@ const golden=require('./golden-inputs.json');
   await page.evaluate(()=>{window.testPad={connected:true,mapping:'standard',axes:[0,0],buttons:Array.from({length:17},(_,i)=>({pressed:i===14,value:i===14?1:0}))};});
   await page.waitForTimeout(100);
   assert.equal(await page.evaluate(()=>moment37.engine._web_value(31)&4),4);
-  assert.equal(await page.locator('#controller').innerText(),'CONTROLLER CONNECTED');
+  assert.equal(await page.locator('#controller').innerText(),'CONTROLE CONECTADO');
   await page.evaluate(()=>{testPad.buttons[14].pressed=false;testPad.buttons[9].pressed=true;});
   await page.waitForFunction(()=>moment37.state.paused);
   await page.evaluate(()=>testPad.buttons[9].pressed=false);await page.waitForTimeout(50);
@@ -94,7 +94,7 @@ const golden=require('./golden-inputs.json');
   await page.evaluate(()=>window.testPad=null);
   // Capture the rendered end state, including the browser's win/retry overlay.
   await page.evaluate(golden=>{const e=moment37.engine;e._web_reset();e._web_start();for(let f=0;f<1100&&e._web_status()===2;f++)e._web_step(golden.inputs[f]||0);},golden);
-  await page.waitForFunction(()=>document.querySelector('#overlay-title').textContent==='Thank you for playing. <3');
+  await page.waitForFunction(()=>document.querySelector('#overlay-title').textContent==='Parabéns. Não esqueça de votar dia 25.');
   await page.screenshot({path:path.join(root,'web/tests/win.png'),fullPage:true});
   assert.deepEqual(errors,[]);
   console.log(JSON.stringify({passed:true,setup,layout,pixels,lose:runs.lose,win:runs.win,controller:'Standard gamepad direction, pause and retry passed',audio:'AudioContext running; nonzero original-engine PCM verified'},null,2));

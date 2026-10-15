@@ -15,14 +15,15 @@ function momentGuideCues(sequence) {
       cues.push({id:`dir-${frame}`,frame,end,bits:dir,lane:'direction',glyph:directions[dir]||'↔',kind:isParry?'parry':isMotion?'motion':'jump',ordinal,
         windowStart:isParry?sequence.expected_parries[ordinal-1]-sequence.parry_window+1:null,
         windowEnd:isParry?sequence.expected_parries[ordinal-1]+1:null,
-        name:isParry?(ordinal===15?'Air parry':'Parry '+String(ordinal).padStart(2,'0')):frame===motionStart?'Crouching medium kick':frame===finisher?'Shippu Jinraikyaku':isMotion?(frame>=shoryukenMotion&&frame<superMotion?'Shoryuken motion':'Super motion'):'Jump',
-        hint:isParry?'Tap forward within the glowing window, then release':frame===motionStart?'Hold ↓ and tap MK':frame===finisher?'← + LK':isMotion?'Hold until the next direction':'Tap up'});
+        name:isParry?(ordinal===15?'Defesa aérea':'Defesa '+String(ordinal).padStart(2,'0')):frame===motionStart?'Chute médio agachado':frame===finisher?'Shippu Jinraikyaku':isMotion?(frame>=shoryukenMotion&&frame<superMotion?'Comando do Shoryuken':'Comando do especial'):'Pulo',
+        hint:isParry?'Toque para a frente enquanto o alvo brilha e solte':frame===motionStart?'Segure ↓ e toque CM':frame===finisher?'← + CL':isMotion?'Segure até a próxima direção':'Toque para cima'});
     }
     if(attack&&attack!==previousAttack){
       let end=frame+1;while(end<=last&&(sequence.inputs[end]&1904)===attack)end++;
       const rank=attack===1024?'HK':attack===512?'MK':attack===32?'MP':'LK';
-      cues.push({id:`attack-${frame}`,frame,end,bits:attack,lane:'attack',glyph:rank,kind:rank==='MP'?'punch':'kick',key:rank==='HK'?'D':rank==='MK'?'S':rank==='MP'?'X':'A',
-        name:rank==='HK'?'Jumping heavy kick':rank==='MK'?'Crouching medium kick':rank==='MP'?'Medium Shoryuken':'Shippu Jinraikyaku',hint:rank==='MP'?'← ↓ ↙ + MP, then cancel the first hit into Shippu':rank==='LK'?'Finish ↓ ↙ ← ↓ ↙ ← + LK':'Tap '+rank});
+      const label={HK:'CF',MK:'CM',MP:'SM',LK:'CL'}[rank];
+      cues.push({id:`attack-${frame}`,frame,end,bits:attack,lane:'attack',glyph:label,kind:rank==='MP'?'punch':'kick',key:rank==='HK'?'D':rank==='MK'?'S':rank==='MP'?'X':'A',
+        name:rank==='HK'?'Chute forte no ar':rank==='MK'?'Chute médio agachado':rank==='MP'?'Shoryuken médio':'Shippu Jinraikyaku',hint:rank==='MP'?'← ↓ ↙ + SM e cancele o primeiro acerto em Shippu':rank==='LK'?'Finish ↓ ↙ ← ↓ ↙ ← + CL':'Toque '+label});
     }
     previousDir=dir;previousAttack=attack;
   }
@@ -40,9 +41,9 @@ class MomentAssistance {
     this.resizeObserver=new ResizeObserver(()=>{this.measure();this.render();});this.resizeObserver.observe(track);
   }
   async load() {
-    const response=await fetch('guide-sequence.json?v=20261009-daigo-finish');if(!response.ok)throw new Error('The input guide could not be loaded.');
+    const response=await fetch('guide-sequence.json?v=20261009-daigo-finish');if(!response.ok)throw new Error('Não foi possível carregar o guia de comandos.');
     const sequence=await response.json();
-    if(Math.abs(sequence.fps-MomentTiming.FPS)>1e-6)throw new Error('The input guide uses a different frame rate.');
+    if(Math.abs(sequence.fps-MomentTiming.FPS)>1e-6)throw new Error('A taxa de quadros do guia não corresponde à do jogo.');
     this.contacts=sequence.expected_parries;
     this.cues=momentGuideCues(sequence);
     this.motionStart=this.cues.find(c=>c.kind==='motion').frame;
@@ -138,11 +139,11 @@ class MomentAssistance {
       node.classList.toggle('confirmed',cue.ordinal>0&&cue.ordinal<=state.parries);
       node.classList.toggle('missed',!!state.failed&&cue.ordinal===state.parries+1);
       if(cue.key)node.querySelector('.guide-key').textContent=controller?'':cue.key;
-      if(motion)node.title=cue.glyph+' — hold to the next direction';
+      if(motion)node.title=cue.glyph+' — segure até a próxima direção';
     });
-    this.title.textContent=paused?'Paused':state.status===4?'Challenge complete':state.failed?(state.finishFailed?'Finish missed':'Sequence missed'):state.desynced?'Rhythm changed':state.status===1?'Ready':next?.name||'Finish the comeback';
-    this.hint.textContent=state.failed?(touch?'Tap Retry':'Press R to retry'):state.desynced?(touch?'Tap Retry to realign the guide':'Press R to realign the guide'):paused?'Resume to continue':state.status===1?'Start the challenge to follow the cues':next?.hint||'Knock out Chun-Li';
-    this.legend.textContent=touch?'HK → MK → MP → LK · touch':controller?'HK → MK → MP → LK · controller':'HK = D · MK = S · MP = X · LK = A';
+    this.title.textContent=paused?'Pausado':state.status===4?'Desafio concluído':state.failed?(state.finishFailed?'Contra-ataque falhou':'Sequência interrompida'):state.desynced?'O ritmo mudou':state.status===1?'Pronto':next?.name||'Vire a luta';
+    this.hint.textContent=state.failed?(touch?'Toque em Reiniciar':'Pressione R para reiniciar'):state.desynced?(touch?'Toque em Reiniciar para realinhar o guia':'Pressione R para realinhar o guia'):paused?'Retome o jogo para continuar':state.status===1?'Inicie o jogo para acompanhar o guia':next?.hint||'Vença a luta';
+    this.legend.textContent=touch?'CF → CM → SM → CL · toque':controller?'CF → CM → SM → CL · controle':'CF = D · CM = S · SM = X · CL = A';
   }
   get state() {return{enabled:this.enabled,loaded:this.loaded,...this.snapshot,displayFrame:this.stoppedFrame??this.snapshot.frame,paused:this.paused};}
 }

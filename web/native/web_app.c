@@ -166,6 +166,20 @@ EMSCRIPTEN_KEEPALIVE int web_init(void) {
 }
 EMSCRIPTEN_KEEPALIVE void web_start(void) {if(saved)status=2;}
 EMSCRIPTEN_KEEPALIVE int web_status(void) {return status;}
+/* Read-only animation diagnostics for comparing artwork to the native VM. */
+EMSCRIPTEN_KEEPALIVE int web_animation(int player,int key) {
+ if(player<0||player>1)return 0;
+ const WORK* w=&plw[player].wu;
+ switch(key){
+  case 0:return w->now_koc;case 1:return w->char_index;
+  case 2:return w->cgd_type?w->cg_ix/w->cgd_type+1:0;
+  case 3:return w->cg_ctr;case 4:return w->cg_flip;case 5:return w->cg_number;
+  case 6:return w->xyz[0].disp.pos;case 7:return w->xyz[1].disp.pos;
+  case 8:return w->rl_flag;case 9:return w->cg_type;
+  case 10:return w->cg_next_ix;case 11:return w->cgd_type;
+ }
+ return 0;
+}
 static int evo_optional_kick(void) {
  // These two kicks naturally miss at the reference spacing after parry pushback.
  return evo_kicks==5||evo_kicks==13;
@@ -228,6 +242,7 @@ EMSCRIPTEN_KEEPALIVE int web_value(int key) {
  if(key==100)return finish_hits;
  if(key>=101&&key<229)return finish_trace[(key-101)/8][(key-101)%8];
  switch(key) {
+ case 64:return plw[0].wu.cg_number;case 65:return plw[1].wu.cg_number;
  case 59:return finish_stage;case 60:return finish_failed;case 61:return finish_hits;
  case 62:return finish_cancels;case 63:return final_parry_air;
  case 56:return parry_tap>=0&&run_frame-parry_tap<PARRY_WINDOW?PARRY_WINDOW-(run_frame-parry_tap):0;

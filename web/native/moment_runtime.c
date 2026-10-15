@@ -1,5 +1,6 @@
 /* Scene initialization only. Player movement, collisions, parries and damage stay in 3SX. */
 #include "moment_runtime.h"
+#include "character_renderer.h"
 #include "main.h"
 #include "constants.h"
 #include "sf33rd/Source/Common/PPGWork.h"
@@ -76,7 +77,7 @@ void Moment_RunGameFrame(void) {
         load_phase=1;
     }
     mpp_w.inGame=true;Play_Game=1;system_timer++;
-    init_color_trans_req();init_texcash_before_process();seqsBeforeProcess();
+    init_color_trans_req();init_texcash_before_process();seqsBeforeProcess();Moment_CharacterBeginFrame();
     Game2_1();BG_move_Ex(3);
     seqsAfterProcess();texture_cash_update();move_pulpul_work();
     if(pcon_rno[0]==1&&plw[0].wu.routine_no[1]==0&&plw[1].wu.routine_no[1]==0&&bg_w.bg_routine==3)ready=1;

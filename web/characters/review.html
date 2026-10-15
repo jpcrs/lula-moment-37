@@ -1,0 +1,75 @@
+<!doctype html>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Native animation artwork review</title>
+<style>
+:root{color-scheme:dark;font:15px system-ui;background:#111820;color:#e8edf0}*{box-sizing:border-box}body{margin:0;padding:28px;max-width:1500px;margin:auto}h1{font-size:24px;margin:0 0 8px}p{color:#aebdc8;line-height:1.5}header{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:24px 0}select,input,button{font:inherit;background:#24313e;color:#e8edf0;border:1px solid #465664;border-radius:5px;padding:9px}select#clip{min-width:360px;max-width:100%}button{cursor:pointer}label{display:flex;gap:8px;align-items:center}.views{display:grid;grid-template-columns:1fr 1fr;gap:14px}.view{border:1px solid #405160;background:#19232d;border-radius:8px;overflow:hidden}.caption{padding:12px 16px;border-bottom:1px solid #405160;display:flex;justify-content:space-between}canvas{display:block;width:100%;image-rendering:pixelated;background:linear-gradient(45deg,#1c2731 25%,transparent 25%,transparent 75%,#1c2731 75%),linear-gradient(45deg,#1c2731 25%,#202c37 25%,#202c37 75%,#1c2731 75%);background-size:24px 24px;background-position:0 0,12px 12px}#timeline{width:100%;margin:18px 0}#details{font:13px ui-monospace,monospace;color:#b7cad7;white-space:pre-wrap}#missing{color:#ffba9d}details{margin-top:22px}pre{max-height:300px;overflow:auto;background:#1a242e;padding:16px;line-height:1.7}.muted{color:#aebdc8;font-size:13px}@media(max-width:650px){body{padding:16px}.views{grid-template-columns:1fr}select#clip{min-width:0;width:100%}}
+</style>
+<h1>Native animation artwork review</h1>
+<p>Compare each original drawing with its replacement at the same origin, scale, and flip. The game runs the original animation interpreter, physics, and control branches.</p>
+<header>
+<select id="fighter" aria-label="Fighter"><option value="pl11">Ken → Luiz</option><option value="pl16">Chun-Li → Flávio</option></select>
+<select id="clip" aria-label="Animation script"></select>
+<button id="play">Play drawings</button><button id="previous" aria-label="Previous drawing">←</button><button id="next" aria-label="Next drawing">→</button>
+<label><input type="checkbox" id="mirror">Mirror</label>
+<label><input type="checkbox" id="holds" checked>Shorten held poses for review</label>
+</header>
+<div class="views"><div class="view"><div class="caption"><strong>Original</strong><span id="original-meta"></span></div><canvas id="original" width="768" height="576"></canvas></div><div class="view"><div class="caption"><strong>Replacement</strong><span id="custom-meta"></span></div><canvas id="custom" width="768" height="576"></canvas></div></div>
+<input type="range" id="timeline" aria-label="Drawing" min="0" max="1" value="0">
+<div id="details"></div><p id="missing"></p>
+<p class="muted">This viewer plays script drawings for art review. Native command branches, motion, hit stops, and landing conditions execute in the game. Long holds are shortened only when the review option is checked.</p>
+<details><summary>Original script records</summary><pre id="program"></pre></details>
+<script>
+(async()=>{
+ const $=id=>document.getElementById(id);
+ const catalog=await(await fetch('/catalog.json')).json();
+ async function loadSet(url,prefix){
+  const data=new DataView(await(await fetch(url)).arrayBuffer()),frames=new Map(),count=data.getUint32(4,true),pages=data.getUint32(8,true);
+  for(let i=0;i<count;i++){const p=12+i*20;frames.set(data.getUint16(p,true),{page:data.getUint16(p+2,true),x:data.getUint16(p+4,true),y:data.getUint16(p+6,true),w:data.getUint16(p+8,true),h:data.getUint16(p+10,true),left:data.getInt16(p+12,true)/64,top:data.getInt16(p+14,true)/64,ww:data.getInt16(p+16,true)/64,hh:data.getInt16(p+18,true)/64});}
+  const images=await Promise.all(Array.from({length:pages},(_,i)=>new Promise((resolve,reject)=>{const im=new Image();im.onload=()=>resolve(im);im.onerror=reject;im.src=prefix+i+'.png';})));return{frames,images};
+ }
+ const [original,custom]=await Promise.all([loadSet('/reference.bin','/reference/sprites-'),loadSet('/custom.bin','/custom/suits-')]);
+ let records=[],entry=null,index=0,playing=false,elapsed=0,last=0;
+ function camera(){
+  let minX=-40,maxX=40,minY=-110,maxY=5;
+  for(const r of records){const f=original.frames.get(r.cg);if(!f)continue;
+   minX=Math.min(minX,f.left,-f.left-f.ww);maxX=Math.max(maxX,f.left+f.ww,-f.left);
+   const top=r.flip&2?-f.top-f.hh:f.top;minY=Math.min(minY,top);maxY=Math.max(maxY,top+f.hh);
+  }
+  const scale=Math.max(1,Math.min(4,Math.floor(768/(maxX-minX+24)),Math.floor(576/(maxY-minY+24))));
+  return{scale,x:(768-(minX+maxX)*scale)/2,y:(576-(minY+maxY)*scale)/2};
+ }
+ function draw(id,set,record){
+  const canvas=$(id),ctx=canvas.getContext('2d');ctx.clearRect(0,0,canvas.width,canvas.height);ctx.imageSmoothingEnabled=false;
+  const cam=camera();ctx.strokeStyle='#526270';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(0,cam.y+.5);ctx.lineTo(768,cam.y+.5);ctx.moveTo(cam.x+.5,0);ctx.lineTo(cam.x+.5,576);ctx.stroke();
+  const f=record&&set.frames.get(record.cg);if(!f)return record?.cg===0;
+  const flip=record.flip^($('mirror').checked?1:0);
+  ctx.save();ctx.translate(cam.x,cam.y);ctx.scale(flip&1?-cam.scale:cam.scale,flip&2?-cam.scale:cam.scale);ctx.drawImage(set.images[f.page],f.x,f.y,f.w,f.h,f.left,f.top,f.ww,f.hh);ctx.restore();return true;
+ }
+ function paint(){
+  const r=records[index];$('timeline').value=index;
+  draw('original',original,r);const found=draw('custom',custom,r);
+  $('original-meta').textContent=r?'CG '+r.cg:'';$('custom-meta').textContent=r?'CG '+r.cg:'';
+  $('details').textContent=r?`${index+1} / ${records.length} · native PC ${r.pc} · ${r.ticks} ticks at 60 Hz · flip ${r.flip} · source ${entry.script}`:'This entry contains command dispatch only. Read the script records below.';
+  $('missing').textContent=r&&!found?'Missing replacement for this native drawing.':'';
+ }
+ function choose(){
+  const d=catalog[$('fighter').value];entry=d.tables[Number($('clip').value)];const s=d.scripts[entry.script];records=s.records.filter(r=>r.type==='frame');index=0;elapsed=0;last=0;
+  $('timeline').max=Math.max(0,records.length-1);
+  $('program').textContent=s.records.map(r=>r.type==='frame'?`${String(r.pc).padStart(3)} DRAW cg=${r.cg} ticks=${r.ticks} type=${r.cgType} flip=${r.flip} overlap=${r.overlap}`:`${String(r.pc).padStart(3)} ${r.op} koc=${r.koc} index=${r.index} pattern=${r.pattern}`).join('\n');
+  history.replaceState(null,'','#'+$('fighter').value+':'+entry.koc+':'+entry.index);paint();
+ }
+ function populate(wantedKoc=0,wantedIndex=14){
+  const d=catalog[$('fighter').value];$('clip').replaceChildren(...d.tables.map((e,i)=>{const o=document.createElement('option');o.value=i;o.textContent=`${e.label||e.script.split(':')[0]} · ${e.koc}:${e.index}`;return o;}));
+  const found=d.tables.findIndex(e=>e.koc===wantedKoc&&e.index===wantedIndex);$('clip').value=found<0?0:found;choose();
+ }
+ $('fighter').onchange=()=>populate();$('clip').onchange=choose;
+ $('play').onclick=()=>{playing=!playing;$('play').textContent=playing?'Pause':'Play drawings';last=0;};
+ function step(delta){playing=false;$('play').textContent='Play drawings';index=(index+delta+Math.max(1,records.length))%Math.max(1,records.length);elapsed=0;paint();}
+ $('previous').onclick=()=>step(-1);$('next').onclick=()=>step(1);$('timeline').oninput=()=>{index=Number($('timeline').value);playing=false;$('play').textContent='Play drawings';paint();};$('mirror').onchange=paint;
+ function frame(time){
+  if(playing&&records.length){if(last)elapsed+=(time-last)*60/1000;const ticks=$('holds').checked?Math.min(records[index].ticks,12):records[index].ticks;if(elapsed>=ticks){elapsed=0;index=(index+1)%records.length;paint();}}
+  last=time;requestAnimationFrame(frame);
+ }
+ const match=location.hash.match(/^#(pl11|pl16):(\d+):(\d+)$/);if(match)$('fighter').value=match[1];populate(match?Number(match[2]):0,match?Number(match[3]):14);requestAnimationFrame(frame);
+})().catch(e=>{document.getElementById('missing').textContent='Could not load review assets: '+e.message;});
+</script>

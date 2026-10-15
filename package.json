@@ -12,7 +12,10 @@
     "test:mobile": "node web/tests/mobile.cjs",
     "test:audio": "node web/tests/audio.cjs",
     "test:mobile-audio": "node web/tests/mobile-audio.cjs",
-    "test:assistance": "node web/tests/assistance.cjs"
+    "test:assistance": "node web/tests/assistance.cjs",
+    "test:characters": "node web/tests/characters.cjs",
+    "test:interface": "node web/tests/interface.cjs",
+    "test:native-animations": "node web/tests/native-animations.cjs"
   },
   "devDependencies": { "@playwright/test": "1.63.0" }
 }

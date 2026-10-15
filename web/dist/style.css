@@ -31,9 +31,9 @@ canvas {width:100%;height:100%;display:block;image-rendering:pixelated;outline:n
 .eyebrow {font-size:10px;letter-spacing:2px;font-weight:600;color:var(--accent);margin:0 0 12px}
 .overlay h2,#pause-overlay h2 {font:700 clamp(28px,4vw,52px)/1.1 'Barlow Condensed',sans-serif;margin:0 0 12px}
 .overlay p:not(.eyebrow) {color:#a7b3c2;max-width:340px;line-height:1.7;font-size:13px}
-.overlay.is-win {background:linear-gradient(180deg,transparent 45%,#0b1018b3 80%,#0b1018eb),url(images/win-photo.png) center 20% / cover no-repeat;backdrop-filter:none;justify-content:flex-end;padding:clamp(20px,5vw,64px) 24px}
-.overlay.is-win #overlay-tag,.overlay.is-win #overlay-copy {display:none}
-.overlay.is-win h2 {color:#fff;text-shadow:0 2px 12px #0008}
+.overlay.is-win {background:linear-gradient(180deg,transparent 45%,#0b1018b3 80%,#0b1018eb),url(images/win-photo.png?v=20261015-victory) center 30% / cover no-repeat;backdrop-filter:none;justify-content:flex-end;padding:clamp(20px,5vw,64px) 24px}
+.overlay.is-win #overlay-copy {display:none}
+.overlay.is-win h2 {color:#fff;text-shadow:0 2px 12px #0008;max-width:26ch;text-wrap:balance}
 #pause-note {color:var(--muted);max-width:320px;margin:0 0 6px;font-size:12px;line-height:1.6}
 .assistance-button {display:flex;align-items:center;gap:6px;padding:6px 0;background:none;font:11px 'DM Sans',sans-serif;color:var(--muted);white-space:nowrap}
 .assistance-button[aria-pressed=true] {color:var(--cyan)}
@@ -83,8 +83,7 @@ canvas {width:100%;height:100%;display:block;image-rendering:pixelated;outline:n
 #load-track {width:220px;height:2px;background:#283443;margin:18px 0 0}
 #load-bar {height:100%;width:0;background:var(--accent);transition:width .2s}
 #load-note {font:10px ui-monospace,monospace!important}
-.game-bottom {grid-template-columns:1fr auto auto;min-height:42px;border-top:0}
-#phase-label {line-height:1.5}
+.game-bottom {grid-template-columns:1fr auto;min-height:42px;border-top:0}
 #attempts {font-variant-numeric:tabular-nums;color:#a8b3c1;white-space:nowrap}
 .game-actions {display:flex;gap:12px;align-items:center;justify-self:end}
 .game-actions button {padding:5px 2px;background:none;color:var(--muted);font-size:15px}
@@ -121,7 +120,6 @@ kbd {font:11px ui-monospace,monospace;border:1px solid #364252;border-bottom-wid
  .parry-progress {grid-column:1 / -1;justify-content:center;gap:12px}
  #parry-markers i {width:7px;height:5px}
  .game-bottom {grid-template-columns:1fr auto;gap:6px 10px;padding:8px 12px;min-height:58px}
- #phase-label {grid-column:1 / -1;font-size:9px}
  #attempts {font-size:9px}
  .game-actions {gap:14px}
  .game-actions button {padding:0 2px}
@@ -243,8 +241,8 @@ kbd {font:11px ui-monospace,monospace;border:1px solid #364252;border-bottom-wid
 .rotate-phone {width:90px;height:48px;border:2px solid var(--cyan);border-radius:9px;display:grid;place-items:center;color:var(--cyan);font-size:29px}
 .touch-mode.mobile-portrait .game-top,.touch-mode.mobile-portrait .play-area,.touch-mode.mobile-portrait .game-bottom {visibility:hidden}
 @media(max-height:480px) and (min-width:701px) {
- :root {--bars-height:154px;--page-padding:4px}
- .game-top {min-height:118px}
+ :root {--bars-height:176px;--page-padding:4px}
+ .game-top {min-height:140px}
  .top-controls {display:grid;grid-template-columns:1fr 1fr;gap:6px 12px}
  .top-controls .volume-control {justify-content:space-between}
  .top-controls .help-button {justify-self:end}
@@ -274,6 +272,7 @@ kbd {font:11px ui-monospace,monospace;border:1px solid #364252;border-bottom-wid
 #mobile-settings .volume-control input {width:100%;height:28px}
 #mobile-settings .volume-control output {display:block;width:auto;font-size:11px}
 #mobile-settings .help-button,#mobile-settings .assistance-button {min-height:44px;font-size:12px;justify-self:stretch;justify-content:center;padding:0;border:1px solid var(--line);border-radius:8px}
+#mobile-settings .help-button {grid-column:1 / -1}
 #mobile-actions {margin-top:14px;border-top:1px solid var(--line);padding-top:14px}
 #mobile-actions .game-actions {display:flex;justify-content:space-evenly;gap:12px}
 #mobile-actions .game-actions button {min-width:80px;min-height:44px;padding:0 8px;border:1px solid var(--line);border-radius:8px}
@@ -287,3 +286,39 @@ kbd {font:11px ui-monospace,monospace;border:1px solid #364252;border-bottom-wid
 .guide-note.punch,.guide-receptor.punch {border-color:var(--cyan);background:#1a303e;color:#e4f7fa;font:700 13px 'DM Sans',sans-serif;padding-bottom:6px;border-radius:8px}
 @media(max-width:700px) {.guide-note.punch,.guide-receptor.punch {font-size:9px;padding-bottom:4px}}
 .touch-mode .guide-note.punch,.touch-mode .guide-receptor.punch {font-size:10px;padding-bottom:0}
+
+/* Compact controls; the independent audio tracks live behind Som. */
+:root {--bars-height:92px}
+.game-top {grid-template-columns:minmax(0,1fr) auto auto;min-height:50px;padding:0 16px;gap:12px}
+.matchup,.parry-progress {grid-column:auto;grid-row:auto}
+.top-controls {display:flex;grid-column:auto;grid-row:auto;justify-self:end;justify-content:flex-end;gap:16px}
+.top-controls .help-button {grid-column:auto;grid-row:auto}
+.game-bottom {grid-template-columns:1fr auto;min-height:42px;padding:0 16px}
+.sound-control {position:relative}
+.sound-button {display:flex;align-items:center;justify-content:center;gap:6px;padding:7px 0;background:none;color:var(--text);font:11px 'DM Sans',sans-serif;white-space:nowrap}
+.sound-button:hover,.sound-button[aria-expanded=true] {color:var(--cyan)}
+.sound-panel {position:absolute;top:calc(100% + 12px);right:0;width:260px;padding:16px;display:grid;gap:14px;border:1px solid #394658;border-radius:10px;background:var(--panel);box-shadow:0 12px 32px #0008;z-index:20;letter-spacing:0}
+.sound-panel[hidden] {display:none}
+.sound-panel .volume-control {display:grid;grid-template-columns:48px minmax(0,1fr) 34px;gap:8px;font:11px 'DM Sans',sans-serif}
+.sound-panel .volume-control input {width:100%;height:24px}
+.sound-panel .volume-control output {width:auto}
+.overlay.is-loss .primary {justify-content:center;margin-top:0}
+@media(max-width:900px),(max-height:700px) {
+ :root {--bars-height:122px}
+ .game-top {grid-template-columns:1fr auto;min-height:80px;padding:10px 12px;gap:8px 12px}
+ .matchup {grid-column:1;grid-row:1}
+ .parry-progress {grid-column:2;grid-row:1;justify-content:flex-end}
+ .top-controls {grid-column:1 / -1;grid-row:2;justify-self:stretch;justify-content:space-between;gap:12px}
+ .game-bottom {min-height:42px;padding:0 12px}
+ .game-actions button span {display:inline}
+ .sound-panel {left:0;right:auto;top:calc(100% + 8px)}
+}
+@media(max-width:400px) {
+ .top-controls {gap:8px}
+ .top-controls .assistance-button,.top-controls .help-button,.sound-button {font-size:10px}
+ .game-actions {gap:10px}
+}
+#mobile-settings .sound-control {grid-column:1 / -1}
+#mobile-settings .sound-button {min-height:44px;width:100%;border:1px solid var(--line);border-radius:8px;font-size:12px}
+#mobile-settings .sound-panel {position:static;width:100%;margin-top:8px;padding:8px 12px;box-shadow:none}
+#mobile-settings .sound-panel .volume-control {grid-template-columns:56px minmax(0,1fr) 34px;gap:8px}

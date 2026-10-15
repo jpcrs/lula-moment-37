@@ -8,9 +8,12 @@ in vec2 vTexCoord;
 out vec4 FragColor;
 
 uniform sampler2D uTexture;
+uniform vec4 uCharacterTint;
 
 void main() {
-    FragColor = texture(uTexture, vTexCoord) * vColor;
+    vec4 color = texture(uTexture, vTexCoord);
+    color.rgb = mix(color.rgb, uCharacterTint.rgb, uCharacterTint.a);
+    FragColor = color * vColor;
 
 	if (FragColor.a == 0.0) {
 		discard;

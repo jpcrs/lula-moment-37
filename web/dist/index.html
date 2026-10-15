@@ -1,121 +1,125 @@
 <!doctype html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#0c1018">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Moment 37">
-  <meta name="description" content="Parry all fifteen kicks and finish the comeback in the original 3rd Strike engine.">
-  <title>Moment 37 — The Daigo Challenge</title>
+  <meta name="apple-mobile-web-app-title" content="Lula Moment #37">
+  <meta name="description" content="Defenda os quinze chutes e vire a luta no Lula Moment #37.">
+  <title>Lula Moment #37</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230c1018'/%3E%3Ctext x='16' y='23' text-anchor='middle' font-family='sans-serif' font-weight='900' font-size='22' fill='%23ffac69'%3E37%3C/text%3E%3C/svg%3E">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="apple-touch-icon" href="images/app-icon-180.png">
-  <link rel="stylesheet" href="style.css?v=20261009-daigo-finish">
-  <link rel="preload" as="image" href="images/win-photo.png" fetchpriority="low">
+  <link rel="stylesheet" href="style.css?v=20261015-victory">
+  <link rel="preload" as="image" href="images/win-photo.png?v=20261015-victory" fetchpriority="low">
 </head>
 <body>
-<main class="game-shell" id="game" aria-label="Daigo parry challenge">
+<main class="game-shell" id="game" aria-label="Desafio Lula Moment #37">
   <div class="game-top">
-    <span class="matchup"><i class="dot" aria-hidden="true"></i>Evo Moment #37</span>
-    <div class="parry-progress" id="parry-progress" role="progressbar" aria-label="Parries" aria-valuemin="0" aria-valuemax="15" aria-valuenow="0" aria-valuetext="0 of 15 parries">
-      <span class="parry-count"><strong id="parries">00</strong><span>/ 15 <span class="counter-label">PARRIES</span></span></span>
+    <span class="matchup"><i class="dot" aria-hidden="true"></i>Lula Moment #37</span>
+    <div class="parry-progress" id="parry-progress" role="progressbar" aria-label="Defesas precisas" aria-valuemin="0" aria-valuemax="15" aria-valuenow="0" aria-valuetext="0 de 15 defesas precisas">
+      <span class="parry-count"><strong id="parries">00</strong><span>/ 15 <span class="counter-label">DEFESAS</span></span></span>
       <div id="parry-markers" aria-hidden="true"></div>
     </div>
     <div class="top-controls">
-      <label class="volume-control" for="game-volume"><span>Game</span><input id="game-volume" type="range" min="0" max="100" value="100" step="1" aria-label="Game volume"><output id="game-volume-value" for="game-volume">100%</output></label>
-      <label class="volume-control" for="evo-volume"><span>Evo</span><input id="evo-volume" type="range" min="0" max="100" value="100" step="1" aria-label="Evo recording volume" disabled><output id="evo-volume-value" for="evo-volume">100%</output></label>
-      <button class="assistance-button" id="assistance" type="button" aria-pressed="false" aria-expanded="false" aria-controls="assistance-panel" title="Show the input timing guide" disabled><span class="assistance-switch" aria-hidden="true"></span>Assistance</button>
-    <button class="help-button" id="help" aria-haspopup="dialog" aria-controls="help-dialog"><span aria-hidden="true">?</span> Help</button>
+      <div class="sound-control">
+        <button class="sound-button" id="sound-toggle" type="button" aria-expanded="false" aria-controls="sound-panel" title="Controlar o som"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M2 6h3l4-3v10l-4-3H2zM12 5a5 5 0 0 1 0 6"/></svg>Som</button>
+        <div class="sound-panel" id="sound-panel" role="group" aria-labelledby="sound-toggle" hidden>
+          <label class="volume-control" for="game-volume"><span>Jogo</span><input id="game-volume" type="range" min="0" max="100" value="100" step="1" aria-label="Volume do jogo"><output id="game-volume-value" for="game-volume">100%</output></label>
+          <label class="volume-control" for="evo-volume"><span>Torcida</span><input id="evo-volume" type="range" min="0" max="100" value="100" step="1" aria-label="Volume da torcida" disabled><output id="evo-volume-value" for="evo-volume">100%</output></label>
+        </div>
+      </div>
+      <button class="assistance-button" id="assistance" type="button" aria-pressed="false" aria-expanded="false" aria-controls="assistance-panel" title="Mostrar o guia de comandos" disabled><span class="assistance-switch" aria-hidden="true"></span>Assistência</button>
+      <button class="assistance-button" id="original-game" type="button" aria-pressed="false" title="Usar os personagens, retratos e nomes originais" disabled><span class="assistance-switch" aria-hidden="true"></span>Jogo original</button>
+    <button class="help-button" id="help" aria-haspopup="dialog" aria-controls="help-dialog"><span aria-hidden="true">?</span> Ajuda</button>
     </div>
   </div>
   <div class="play-area">
   <div class="mobile-hud" id="mobile-hud">
-    <span class="mobile-score" aria-label="Challenge progress"><strong id="mobile-parries">00 / 15</strong><small id="mobile-attempts">TRY 01</small></span>
-    <button id="mobile-menu-open" type="button" aria-label="Open game menu" aria-haspopup="dialog" aria-controls="mobile-menu">☰</button>
+    <span class="mobile-score" aria-label="Progresso do desafio"><strong id="mobile-parries">00 / 15</strong><small id="mobile-attempts">TENTATIVA 01</small></span>
+    <button id="mobile-menu-open" type="button" aria-label="Abrir menu do jogo" aria-haspopup="dialog" aria-controls="mobile-menu">☰</button>
   </div>
   <div class="screen" id="screen">
-    <canvas id="canvas" width="768" height="576" style="visibility:hidden" aria-label="Street Fighter III: 3rd Strike game" tabindex="0"></canvas>
+    <canvas id="canvas" width="768" height="576" style="visibility:hidden" aria-label="Jogo Lula Moment #37" tabindex="0"></canvas>
     <div class="overlay" id="overlay">
-      <p class="eyebrow" id="overlay-tag">THE DAIGO CHALLENGE</p>
-      <h2 id="overlay-title">Loading game</h2>
-      <p id="overlay-copy">Preparing the original game engine and your disc’s resources.</p>
+      <h2 id="overlay-title">Carregando o jogo</h2>
+      <p id="overlay-copy">Preparando o jogo…</p>
       <div id="load-track"><div id="load-bar"></div></div>
-      <p id="load-note">Starting WebAssembly…</p>
-      <button class="primary" id="play" disabled>Loading… <span>↗</span></button>
+      <p id="load-note">Carregando…</p>
+      <button class="primary" id="play" disabled>Carregando… <span>↗</span></button>
     </div>
     <div id="pause-overlay" hidden>
-      <p class="eyebrow">TAKE A BREATH</p><h2>Paused</h2>
+      <h2>Pausado</h2>
       <p id="pause-note" hidden></p>
-      <button class="primary" id="resume">Back to the moment ↗</button>
+      <button class="primary" id="resume">Continuar ↗</button>
     </div>
     <dialog id="help-dialog" aria-labelledby="help-title">
-      <div class="help-heading"><div><p class="eyebrow">THE DAIGO CHALLENGE</p><h2 id="help-title">Make the comeback.</h2></div><button id="help-close" aria-label="Close help" autofocus>×</button></div>
-      <p class="help-intro">You’re Ken, on the right, with one health point. Parry all fifteen kicks from Chun-Li’s super, then knock her out. Blocking deals chip damage and will end your attempt.</p>
+      <div class="help-heading"><div><h2 id="help-title">Como jogar</h2></div><button id="help-close" aria-label="Fechar ajuda" autofocus>×</button></div>
+      <p class="help-intro">Você é <span data-fighter="0">Luiz</span>, à direita, com um ponto de vida. Defenda os quinze chutes do especial de <span data-fighter="1">Flávio</span> com defesas precisas e depois vença a luta. A defesa comum causa dano e encerra sua tentativa.</p>
       <ol class="instructions">
-        <li><h3>Tap forward. Release. Repeat.</h3><p>Tap <kbd>←</kbd> toward Chun-Li just before each hit. Release between taps; holding forward won’t keep parrying.</p></li>
-        <li><h3>Take the last one airborne.</h3><p>Jump before the final kick, then tap forward in the air to parry it.</p></li>
-        <li><h3>Finish the comeback.</h3><p>Jumping heavy kick → crouching medium kick → <b>medium Shoryuken</b> → Shippu Jinraikyaku. Land the jump kick low, link the crouching kick, then cancel into <b>← ↓ ↙ + medium punch</b>. Cancel Shoryuken’s <b>first hit</b> into <b>↓ ↙ ← ↓ ↙ ← + kick</b>. All twelve hits must connect as one combo; another knockout does not complete the challenge.</p></li>
+        <li><h3>Toque para a frente. Solte. Repita.</h3><p>Toque <kbd>←</kbd> na direção de <span data-fighter="1">Flávio</span> pouco antes de cada golpe. Solte entre os toques; manter a direção pressionada não repete a defesa precisa.</p></li>
+        <li><h3>Defenda o último chute no ar.</h3><p>Pule antes do chute final e toque para a frente no ar para defendê-lo.</p></li>
+        <li><h3>Vire a luta.</h3><p>Chute forte no ar → chute médio agachado → <b>Shoryuken médio</b> → Shippu Jinraikyaku. Acerte o chute aéreo perto do chão, emende o chute agachado e cancele em <b>← ↓ ↙ + soco médio</b>. Cancele o <b>primeiro acerto</b> do Shoryuken em <b>↓ ↙ ← ↓ ↙ ← + chute</b>. Os doze acertos precisam formar uma única sequência; outro nocaute não completa o desafio.</p></li>
       </ol>
       <div class="controls">
-        <h3>Keyboard</h3>
-        <dl><dt>Move / parry</dt><dd><kbd>←</kbd> <kbd>↓</kbd> <kbd>↑</kbd> <kbd>→</kbd></dd><dt>Light / medium / heavy punch</dt><dd><kbd>Z</kbd> <kbd>X</kbd> <kbd>C</kbd></dd><dt>Light / medium / heavy kick</dt><dd><kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd></dd><dt>Retry</dt><dd><kbd>R</kbd></dd><dt>Pause / resume</dt><dd><kbd>Space</kbd> / <kbd>Esc</kbd></dd><dt>Start / resume</dt><dd><kbd>Enter</kbd></dd></dl>
-        <h3>Controller</h3>
-        <p>D-pad or left stick to move. Xbox <b>X / Y / RB</b> or PlayStation <b>Square / Triangle / R1</b> for punches; Xbox <b>A / B / RT</b> or PlayStation <b>Cross / Circle / R2</b> for kicks. <b>Start / Options</b> starts or pauses; <b>Back / Share</b> retries.</p>
-        <div class="touch-help"><h3>Touch · landscape</h3><p>Use the left D-pad to move and parry. Tap <b>←</b> and lift your thumb between hits. Slide through <b>↓ ↙ ←</b> for each quarter circle; use the right <b>LK / MK / HK</b> buttons for kicks. You can hold a direction and attack with another finger. Open <b>☰</b> for volumes, Assistance, Help and retry; opening the menu pauses the attempt. Rotating to portrait also pauses.</p><p>On iPhone, use Safari’s <b>Share → Add to Home Screen</b>, then launch the game from its icon to remove the browser address bar and tabs.</p></div>
-        <p class="controller-status" id="controller">KEYBOARD READY</p>
+        <h3>Teclado</h3>
+        <dl><dt>Mover / defesa precisa</dt><dd><kbd>←</kbd> <kbd>↓</kbd> <kbd>↑</kbd> <kbd>→</kbd></dd><dt>Soco leve / médio / forte</dt><dd><kbd>Z</kbd> <kbd>X</kbd> <kbd>C</kbd></dd><dt>Chute leve / médio / forte</dt><dd><kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd></dd><dt>Tentar novamente</dt><dd><kbd>R</kbd></dd><dt>Pausar / continuar</dt><dd><kbd>Espaço</kbd> / <kbd>Esc</kbd></dd><dt>Iniciar / continuar</dt><dd><kbd>Enter</kbd></dd></dl>
+        <h3>Controle</h3>
+        <p>Use o direcional ou o analógico esquerdo para mover. No Xbox, <b>X / Y / RB</b> dão socos e <b>A / B / RT</b> dão chutes. No PlayStation, use <b>Quadrado / Triângulo / R1</b> para socos e <b>Cruz / Círculo / R2</b> para chutes. <b>Start / Options</b> inicia ou pausa; <b>Back / Share</b> reinicia.</p>
+        <div class="touch-help"><h3>Toque · tela na horizontal</h3><p>Use o direcional à esquerda para mover e defender. Toque <b>←</b> e levante o dedo entre os golpes. Deslize por <b>↓ ↙ ←</b> para cada quarto de círculo; use os botões de chute à direita. Você pode manter uma direção com um dedo e atacar com outro. Abra <b>☰</b> para acessar Som, Assistência, Ajuda e tentar novamente. Abrir o menu ou girar o celular para a vertical pausa a tentativa.</p><p>No iPhone, use <b>Compartilhar → Adicionar à Tela de Início</b> no Safari e abra o jogo pelo ícone para ocultar a barra de endereço e as abas.</p></div>
+        <p class="controller-status" id="controller">TECLADO PRONTO</p>
       </div>
-      <div class="help-videos"><a href="https://www.youtube.com/watch?v=JzS96auqau0" target="_blank" rel="noopener noreferrer">Watch Daigo’s Evo Moment #37 <span aria-hidden="true">↗</span></a><a href="https://www.youtube.com/watch?v=jQ_2iIqxH7Y" target="_blank" rel="noopener noreferrer">Bonus <span aria-hidden="true">↗</span></a></div>
-      <p class="help-credits">Built with <a href="https://github.com/crowded-street/3sx" target="_blank" rel="noopener noreferrer">3SX by Crowded Street</a>, based on <a href="https://github.com/crowded-street/3s-decomp" target="_blank" rel="noopener noreferrer">3s-decomp</a>.<br><a href="https://github.com/jpcrs/evo-moment-37" target="_blank" rel="noopener noreferrer">Browser port source</a> · <a href="LICENSE-3SX.txt" target="_blank" rel="noopener noreferrer">AGPL-3.0</a></p>
-      <p class="help-note">Each fresh forward tap has a ten-frame parry window, including the first and airborne parries. Release between taps; holding forward does not parry the next hit.<br>Assistance places each parry symbol near the middle of that window. Its shaded band shows the full valid window and the dimmed target glows while it is open. For the counterattack, hold tails show how long to keep a direction. Follow the jump and counterattack cues. The guide follows game frames and freezes on pause or a missed sequence. If movement changes the hit rhythm, retry to realign the guide.<br>Game and Evo adjust their audio independently; 0% mutes a track. The Evo recording starts with Chun-Li’s super and stops on a failed parry or an escape. Complete all fifteen parries to keep it playing.<br>Opening Help pauses an active attempt. Closing it returns you to the game.</p>
+      <div class="help-videos"><a href="https://www.youtube.com/watch?v=JzS96auqau0" target="_blank" rel="noopener noreferrer">Vídeo original <span aria-hidden="true">↗</span></a><a href="https://www.youtube.com/watch?v=jQ_2iIqxH7Y" target="_blank" rel="noopener noreferrer">Vídeo extra <span aria-hidden="true">↗</span></a></div>
+      <p class="help-credits">Criado com <a href="https://github.com/crowded-street/3sx" target="_blank" rel="noopener noreferrer">3SX, de Crowded Street</a>, com base em <a href="https://github.com/crowded-street/3s-decomp" target="_blank" rel="noopener noreferrer">3s-decomp</a>.<br><a href="https://github.com/jpcrs/evo-moment-37" target="_blank" rel="noopener noreferrer">Código da versão para navegador</a> · <a href="LICENSE-3SX.txt" target="_blank" rel="noopener noreferrer">AGPL-3.0</a></p>
+      <p class="help-note">Cada novo toque para a frente abre uma janela de dez quadros para a defesa precisa, inclusive no primeiro golpe e no golpe aéreo. Solte entre os toques; manter a direção pressionada não defende o próximo golpe.<br>A Assistência posiciona os símbolos perto do centro dessa janela. A faixa sombreada mostra o intervalo válido e o alvo acende enquanto ele está aberto. No contra-ataque, as caudas indicam por quanto tempo manter cada direção ou golpe. Siga as indicações de salto e ataque. O guia acompanha os quadros do jogo e para durante uma pausa ou após um erro. Se seus movimentos alterarem o ritmo, reinicie para realinhá-lo.<br>Em Som, ajuste Jogo e Torcida separadamente; 0% silencia a faixa. A gravação da torcida começa com o especial de <span data-fighter="1">Flávio</span> e para se você errar uma defesa ou sair do alcance. Complete as quinze defesas para continuar ouvindo.<br>Abrir a Ajuda pausa a tentativa. Ao fechá-la, você volta ao jogo.</p>
     </dialog>
   </div>
-  <aside class="assistance-panel" id="assistance-panel" aria-label="Input assistance" hidden>
-    <div class="guide-heading"><h2>Input guide</h2><p>Match the dimmed symbols.</p></div>
+  <aside class="assistance-panel" id="assistance-panel" aria-label="Assistência de comandos" hidden>
+    <div class="guide-heading"><h2>Guia de comandos</h2><p>Acompanhe os símbolos.</p></div>
     <div class="guide-track" id="guide-track">
-      <div class="guide-lanes" aria-hidden="true"><span>DIRECTION</span><span>ATTACK</span></div>
+      <div class="guide-lanes" aria-hidden="true"><span>DIREÇÃO</span><span>ATAQUE</span></div>
       <div class="guide-targets" id="guide-targets" aria-hidden="true"></div>
     </div>
-    <div class="guide-footer"><strong id="guide-next">Ready</strong><p id="guide-hint">Start the challenge to follow the cues</p><small id="guide-legend">HK = D · MK = S · MP = X · LK = A</small></div>
+    <div class="guide-footer"><strong id="guide-next">Pronto</strong><p id="guide-hint">Inicie o jogo para acompanhar o guia</p><small id="guide-legend">CF = D · CM = S · SM = X · CL = A</small></div>
   </aside>
-  <div class="touch-controls" id="touch-controls" aria-label="Touch game controls" hidden>
-    <div class="touch-pad" id="touch-pad" role="group" aria-label="Movement and parry">
-      <button type="button" data-touch-input="5" data-direction aria-label="Up left" aria-pressed="false">↖</button>
-      <button type="button" data-touch-input="1" data-direction aria-label="Jump" aria-pressed="false">↑</button>
-      <button type="button" data-touch-input="9" data-direction aria-label="Up right" aria-pressed="false">↗</button>
-      <button type="button" data-touch-input="4" data-direction aria-label="Forward left, parry" aria-pressed="false">←<small>PARRY</small></button>
+  <div class="touch-controls" id="touch-controls" aria-label="Controles de toque" hidden>
+    <div class="touch-pad" id="touch-pad" role="group" aria-label="Movimento e defesa precisa">
+      <button type="button" data-touch-input="5" data-direction aria-label="Cima e esquerda" aria-pressed="false">↖</button>
+      <button type="button" data-touch-input="1" data-direction aria-label="Pular" aria-pressed="false">↑</button>
+      <button type="button" data-touch-input="9" data-direction aria-label="Cima e direita" aria-pressed="false">↗</button>
+      <button type="button" data-touch-input="4" data-direction aria-label="Frente à esquerda, defesa precisa" aria-pressed="false">←<small>DEFESA</small></button>
       <span class="touch-pad-center" aria-hidden="true">+</span>
-      <button type="button" data-touch-input="8" data-direction aria-label="Back right" aria-pressed="false">→</button>
-      <button type="button" data-touch-input="6" data-direction aria-label="Down left" aria-pressed="false">↙</button>
-      <button type="button" data-touch-input="2" data-direction aria-label="Crouch" aria-pressed="false">↓</button>
-      <button type="button" data-touch-input="10" data-direction aria-label="Down right" aria-pressed="false">↘</button>
+      <button type="button" data-touch-input="8" data-direction aria-label="Trás à direita" aria-pressed="false">→</button>
+      <button type="button" data-touch-input="6" data-direction aria-label="Baixo e esquerda" aria-pressed="false">↙</button>
+      <button type="button" data-touch-input="2" data-direction aria-label="Agachar" aria-pressed="false">↓</button>
+      <button type="button" data-touch-input="10" data-direction aria-label="Baixo e direita" aria-pressed="false">↘</button>
     </div>
-    <div class="touch-attacks" role="group" aria-label="Attack buttons">
-      <button type="button" data-touch-input="16" aria-label="Light punch" aria-pressed="false">LP</button>
-      <button type="button" data-touch-input="32" aria-label="Medium punch" aria-pressed="false">MP</button>
-      <button type="button" data-touch-input="64" aria-label="Heavy punch" aria-pressed="false">HP</button>
-      <button type="button" data-touch-input="256" aria-label="Light kick" aria-pressed="false">LK</button>
-      <button type="button" data-touch-input="512" aria-label="Medium kick" aria-pressed="false">MK</button>
-      <button type="button" data-touch-input="1024" aria-label="Heavy kick" aria-pressed="false">HK</button>
+    <div class="touch-attacks" role="group" aria-label="Botões de ataque">
+      <button type="button" data-touch-input="16" aria-label="Soco leve" aria-pressed="false">SL</button>
+      <button type="button" data-touch-input="32" aria-label="Soco médio" aria-pressed="false">SM</button>
+      <button type="button" data-touch-input="64" aria-label="Soco forte" aria-pressed="false">SF</button>
+      <button type="button" data-touch-input="256" aria-label="Chute leve" aria-pressed="false">CL</button>
+      <button type="button" data-touch-input="512" aria-label="Chute médio" aria-pressed="false">CM</button>
+      <button type="button" data-touch-input="1024" aria-label="Chute forte" aria-pressed="false">CF</button>
     </div>
   </div>
   </div>
   <div class="game-bottom">
-    <span id="phase-label">PREPARING CHALLENGE</span>
-    <span id="attempts">ATTEMPT 01</span>
-    <div class="game-actions"><button id="pause" disabled aria-label="Pause">Ⅱ <span>Pause</span></button><button id="retry" disabled>↻ <span>Retry</span></button><button id="fullscreen" aria-label="Fullscreen">⛶</button></div>
+    <span id="attempts">TENTATIVA 01</span>
+    <div class="game-actions"><button id="pause" disabled aria-label="Pausar">Ⅱ <span>Pausar</span></button><button id="retry" disabled>↻ <span>Reiniciar</span></button><button id="fullscreen" aria-label="Tela cheia">⛶</button></div>
   </div>
-  <div class="mobile-rotate" id="mobile-rotate" role="status" hidden><div class="rotate-phone" aria-hidden="true">↻</div><h2>Turn your phone sideways.</h2><p>The challenge plays in landscape.<br>Rotate to use the touch controls.</p></div>
+  <div class="mobile-rotate" id="mobile-rotate" role="status" hidden><div class="rotate-phone" aria-hidden="true">↻</div><h2>Vire o celular.</h2><p>Jogue com a tela na horizontal.<br>Gire o celular para usar os controles de toque.</p></div>
   <dialog id="mobile-menu" aria-labelledby="mobile-menu-title">
-    <div class="mobile-menu-heading"><h2 id="mobile-menu-title">Evo Moment #37</h2><button id="mobile-menu-close" type="button" aria-label="Close game menu" autofocus>×</button></div>
+    <div class="mobile-menu-heading"><h2 id="mobile-menu-title">Lula Moment #37</h2><button id="mobile-menu-close" type="button" aria-label="Fechar menu do jogo" autofocus>×</button></div>
     <div id="mobile-settings"></div>
     <div id="mobile-actions"></div>
-    <p class="mobile-install" id="mobile-install">For a screen without Safari’s address bar or tabs: <b>Share → Add to Home Screen</b>, then open the game from its icon.</p>
-    <button class="primary" id="mobile-menu-back" type="button">Back to game ↗</button>
+    <p class="mobile-install" id="mobile-install">Para ocultar a barra de endereço e as abas do Safari, use <b>Compartilhar → Adicionar à Tela de Início</b> e abra o jogo pelo ícone.</p>
+    <button class="primary" id="mobile-menu-back" type="button">Voltar ao jogo ↗</button>
   </dialog>
 </main>
-<script src="engine.js?v=20261009-daigo-finish"></script><script src="timing.js"></script><script src="touch.js"></script><script src="audio.js?v=20261008"></script><script src="assistance.js?v=20261009-daigo-finish"></script><script src="app.js?v=20261009-daigo-finish"></script>
+<script src="engine.js?v=20261015-victory"></script><script src="timing.js"></script><script src="touch.js"></script><script src="audio.js?v=20261015-victory"></script><script src="assistance.js?v=20261015-victory"></script><script src="app.js?v=20261015-victory"></script>
 <!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "5d67cce2f8cd4b59bfad0d0880a04b0c"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
 </html>

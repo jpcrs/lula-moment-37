@@ -1,4 +1,4 @@
-# Moment 37
+# Lula Moment #37
 
 A playable browser challenge built from the `3sx` C engine and a local PS2 disc image. Ken versus Chun-Li on the NYC subway stage, one health point, a scripted Houyoku-sen, fifteen parries and a counterattack to win. Keyboard, standard browser controllers and mobile touch controls are supported.
 
@@ -10,7 +10,9 @@ The built game is already in `web/dist`. No build is needed to play it:
 npm start
 ```
 
-Open **http://localhost:3737** in a browser with WebGL 2. Click **Start challenge** (or press Enter / controller Start). The build initializes the fixed fight directly. There are no title, menu, selection or round-intro sequences. The game fills the available viewport with parry progress and Help in its top bar, and the attempt counter and game controls in its bottom bar. Help contains the instructions and keyboard/controller mappings; it pauses an active attempt while open.
+Open **http://localhost:3737** in a browser with WebGL 2. Click **Jogar** (or press Enter / controller Start). The build initializes the fixed fight directly. There are no title, menu, selection or round-intro sequences. The game fills the available viewport with parry progress and Help in its top bar, and the attempt counter and game controls in its bottom bar. Help contains the instructions and keyboard/controller mappings; it pauses an active attempt while open.
+
+The default artwork uses the two suited fighters inspired by the supplied video and portraits: a cream hat, white beard and a navy tie with green, gold and fine pale diagonal stripes for Luiz (Ken’s replacement), and dark hair with gray temples, a gray suit and blue tie for Flávio (Chun-Li’s replacement). The gray-suited fighter has bare eyes and a face based on the supplied close-up. **Jogo original** in the top bar restores the original sprites, HUD portraits and names. On mobile it appears in the existing ☰ settings menu. Switching artwork updates the current frame immediately, including while paused, and retains the current attempt, positions, health, inputs and timing. The selection survives retries; a fresh page load defaults to the new artwork. The health bars show the approved faces and pixel lettering for **LUIZ** and **FLÁVIO**.
 
 | Action | Keyboard | Xbox / PlayStation controller |
 | --- | --- | --- |
@@ -30,7 +32,7 @@ Ken starts on the right, facing Chun-Li on the left. Tap **left**, then release,
 
 The guide reads the native engine's next input-frame index after each simulation step. It uses no wall-clock animation or delayed timers, so pause freezes the notes and retry returns them to the start. Its cue file is copied from the same successful input fixture used by the local macOS macro. Parry symbols aim near the middle of the valid ten-frame window; shaded bands show its extent and the dimmed forward target glows for every valid frame. The airborne cue is at input frame 441, ahead of contact at 445. Counterattack cues also sit inside their valid ranges. Green feedback comes from confirmed engine parries. If an attempt misses a required parry, or changed positioning shifts the reference contact rhythm, the guide freezes and asks for a retry. Assistance never supplies inputs.
 
-The top bar includes independent **Game** and **Evo** volume sliders, both starting at 100%; 0% mutes a track. Starting with Evo above 0% loads a local 16-second PCM clip from the requested Evo Events recording, beginning at its super-activation frame (video frame 896 at 30 fps, 29.8667 seconds). The recording is aligned to the engine’s confirmed Houyoku-sen activation. Playback follows the ratio between the PS2 clock and the original challenge’s 59.59949 Hz recording alignment, preserving synchronization after the clock correction. Pause holds the recording at the game clock; resume restores the matching offset; retry resets it and preserves both volume settings. Help links to the official recording and the requested Bonus video.
+The interface is in Brazilian Portuguese and uses the title **Lula Moment #37**. The top bar’s **Som** button opens independent **Jogo** and **Torcida** volume sliders, both starting at 100%; 0% mutes a track. The panel closes on an outside click or Escape and is also available inside the mobile menu. Loading, Help, assistance, pause, accessibility labels and touch controls are translated. A failed attempt shows only **Tentar novamente**; the footer has no phase slogan. Starting with Evo above 0% loads a local 16-second PCM clip from the requested Evo Events recording, beginning at its super-activation frame (video frame 896 at 30 fps, 29.8667 seconds). The recording is aligned to the engine’s confirmed Houyoku-sen activation. Playback follows the ratio between the PS2 clock and the original challenge’s 59.59949 Hz recording alignment, preserving synchronization after the clock correction. Pause holds the recording at the game clock; resume restores the matching offset; retry resets it and preserves both volume settings. Help links to the official recording and the requested Bonus video.
 
 Where supported, the browser requests a `playback` Audio Session before creating its audio context. This addresses [WebKit's Silent Mode behavior](https://bugs.webkit.org/show_bug.cgi?id=237322) for both tracks on iPhone Safari. Start and trusted input gestures prime the output and resume suspended or interrupted contexts. An unexpected audio interruption pauses the challenge; Resume restores the audio context before advancing any game frames and resumes the recording from its saved game position. Browsers without Audio Session support keep the standard Web Audio path.
 
@@ -47,6 +49,7 @@ The local server binds to your own computer. No player account is needed. The pa
 The changes are outside that checkout:
 
 - `web/native/webgl_renderer.c` and shaders adapt the desktop OpenGL renderer to WebGL 2, retaining the original indexed textures, palettes and draw commands.
+- `web/characters/art/native` contains a separate redraw for each distinct native character bitmap, using the requested bare-eyed face, blue tie on the gray suit, and striped navy, green and gold tie on the hat character. The catalogue covers all 799 animation scripts and all 2,695 graphic IDs, including overlap pieces and damage poses selected directly by native code. Only 813 byte-identical native graphics share artwork; similar poses never substitute for one another. Ken’s eleven abstract fire-trail drawings retain their original pixels and colors. `build_native.lua` refuses incomplete coverage. Exports retain each original graphic's exact origin and dimensions, binary alpha, and a common 128-color palette without dithering. The original interpreter still controls drawing order, durations, branches, flips, movement, hit stops, and landing conditions. Both artwork sets use the game's original 384×224 framebuffer. A generated copy of `aboutspr.c` tags player and afterimage draw requests so the WebGL renderer can select artwork. `web_original` replays the last draw list without a simulation tick; palette flashes, transparency and brightness also apply to custom artwork.
 - `web/native/web_support.c` supplies browser input and host services in place of desktop configuration, filesystem discovery and controller discovery.
 - `web/native/web_app.c` selects the fixed matchup, initializes the challenge state, records and consumes the ten-frame forward-tap window, supplies Chun-Li's super command through the original pad interface, observes confirmed hit order and both native cancel transitions, and restores the original engine state on retry. Resets also restore effects, background state, background-layer switches, HUD tiles, palettes and pad history, recompute the renderer's scale from the saved camera zoom, and invalidate the renderer’s texture cache. Pixel comparisons verify the same rendered scene after a KO and when retry interrupts Chun-Li's super zoom.
 - `web/native/moment_runtime.c` initializes only Ken, Chun-Li and their stage. `web/specialize.py` copies the original frame loop verbatim, restricts dispatch tables to this scene, and generates a copy of `hitcheck.c` with the explicit parry-timer hook at the start of the two PS2 defense routines and a read-only finish observer after confirmed-hit combo bookkeeping. The observer grades the move sequence and combo continuity without changing damage, attack inputs or cancel windows. The title/menu/selection routes are absent from the linked module; `web/audit_build.py` checks the linker symbol map and resource manifest.
@@ -97,7 +100,7 @@ The build prepares approximately 10.4 MiB of disc resources. The ISO and interme
 
 `.github/workflows/pages.yml` publishes `web/dist` on every push to `main` and can also be run manually. The repository's Pages publishing source is **GitHub Actions**. CI deploys the prebuilt static bundle; it does not need the ISO, 3SX checkout, or native toolchains. When native code changes, rebuild locally and commit the updated engine files before pushing.
 
-The game is hosted at **https://jpcrs.github.io/evo-moment-37/**. All runtime URLs are relative so the game works under the repository path.
+The game is hosted at **https://jpcrs.github.io/lula-moment-37/**. All runtime URLs are relative so the game works under the repository path.
 
 ## Verify
 
@@ -109,9 +112,12 @@ npm run test:finish
 npm test
 npm run test:timing
 npm run test:audio
+npm run test:interface
 npm run test:mobile-audio
 npm run test:assistance
 npm run test:mobile
+npm run test:characters
+npm run test:native-animations
 python3 web/audit_build.py
 ```
 
@@ -126,6 +132,29 @@ The mobile integration check exercises portrait gating, rotation during play and
 The mobile audio test measures nonzero signal after both volume gains in Chromium and WebKit, checks WebKit's playback session type, simulates an interrupted context, verifies that gameplay freezes until audio resumes, and checks volume preservation on retry. Browser emulation cannot verify a physical iPhone's speaker or Silent Mode switch.
 
 Automated controller checks use the standard Gamepad API with a simulated pad. A physical controller has not been attached for this test. Mobile checks emulate touch devices in Chromium and WebKit; a physical phone has not been tested.
+
+The character test compares all 66 exposed native values on every frame of the complete winning sequence in custom mode, original mode, and with repeated switches during play. It also checks visible changes, exact return to the custom frame, keyboard activation, switching while paused, and access to the toggle in the mobile menu.
+
+To repack the saved illustrated artwork with Aseprite 1.3+:
+
+```sh
+aseprite -b --script-param aseprite_mcp_workspace="$PWD" --script web/characters/build.lua
+npm run build
+```
+
+The editable sources are `hat-fighter-native.aseprite`, `gray-fighter-native.aseprite`, and `gray-fighter-native-extra.aseprite` in `web/characters`. The gray fighter’s project is split into two parts to stay below repository file-size limits. Tags name every native graphic ID. Cels use a 3× working scale with world origin `(960, 1100)`; the strict packer samples the original native rectangle on a fixed 3×3 grid and uses one shared palette across all atlas pages. Repacking needs no image-generation service. See `web/characters/README.md` for the complete extraction, import, and review workflow.
+
+`native-animations.json` records every entry point, header, frame duration, flip, overlap, raw record and control opcode from the original ten animation banks. It documents the original interpreter rather than replacing it with an estimated animation clock. The previous silhouette map and the old breathing mesh are retained only as historical source files; the native redraw pipeline does not use them.
+
+Run the artwork comparison locally:
+
+```sh
+python3 web/characters/review.py --port 3751
+```
+
+Open `http://localhost:3751` to compare original and replacement drawings with the same frame IDs, origins and flips. This is an art reviewer: gameplay branches, physics, hit stops and landing conditions run in the game. The held-pose shortening option affects this viewer only. The redraws reconstruct the supplied characters in the native poses; they are not the video's original production artwork.
+
+`npm run test:native-animations` verifies all 2,695 graphic bindings, exact native placement and dimensions, and that only identical original drawings share a packed rectangle. It also compares live native animation and combat state in original/custom modes across eleven movement and attack inputs and the complete winning sequence, including the moving-jump somersault and Chun-Li’s super, and checks the catalogue against the native VM. These checks establish binding and timing correctness; artwork fidelity also requires visual review.
 
 ## Attribution
 

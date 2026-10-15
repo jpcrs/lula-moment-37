@@ -43,6 +43,8 @@ const golden=require('./golden-inputs.json');
   await page.tap('#mobile-menu-open');
   assert.equal(await page.evaluate(()=>moment37.state.paused),true);
   assert.equal(await page.locator('#touch-controls').isVisible(),false);
+  assert.equal(await page.locator('#game-volume').isVisible(),false);
+  await page.tap('#sound-toggle');
   assert.equal(await page.locator('#game-volume').isVisible(),true);
   await page.waitForTimeout(80);
   assert.equal(await page.evaluate(()=>moment37.engine._web_value(2)),menuFrame,'Opening menu freezes the native game');
@@ -150,7 +152,7 @@ const golden=require('./golden-inputs.json');
   await page.tap('#retry');
   assert.equal(await page.evaluate(()=>mobileMenu.open),false);
   assert.equal(await page.evaluate(()=>moment37.state.paused),false);
-  assert.equal(await page.locator('#mobile-attempts').textContent(),`TRY ${String(await page.evaluate(()=>moment37.state.attempt)).padStart(2,'0')}`);
+  assert.equal(await page.locator('#mobile-attempts').textContent(),`TENTATIVA ${String(await page.evaluate(()=>moment37.state.attempt)).padStart(2,'0')}`);
   const touchRun=await page.evaluate(g=>{
    // Trusted multi-touch/capture was checked above. For a repeatable frame
    // replay, dispatch timestamped pointer transitions at the actual buttons.

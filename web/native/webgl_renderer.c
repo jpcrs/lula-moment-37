@@ -1,4 +1,4 @@
-/* Adapted from 3SX OpenGL renderer, GPL-3.0; WebGL2 host changes only. */
+/* Adapted from the 3SX OpenGL renderer for WebGL2 and optional character artwork. */
 #if CRS_VIDEO_DRIVER_OPENGL
 
 #include "platform/video/opengl/opengl_renderer.h"
@@ -11,6 +11,12 @@
 #include <GLES3/gl3.h>
 #include "stb/stb_ds.h"
 #include <SDL3/SDL.h>
+#include <emscripten.h>
+#include "character_renderer.h"
+#include "sf33rd/Source/Game/engine/plcnt.h"
+#include "sf33rd/Source/Game/rendering/mtrans.h"
+#include "sf33rd/Source/Game/rendering/dc_ghost.h"
+#include "sf33rd/Source/Game/rendering/color3rd.h"
 
 #include <libgraph.h>
 
@@ -70,6 +76,9 @@ typedef struct GLQuad {
     Uint32 index;
     GLTextureSpec texture_spec;
     GLColor color;
+    GLColor character_tint;
+    Uint8 character;
+    Uint8 custom;
 } GLQuad;
 
 static SDL_Window* window = NULL;
@@ -83,6 +92,8 @@ static GLuint solid_shader = 0;
 static GLuint palette_4_shader = 0;
 static GLuint palette_8_shader = 0;
 static GLuint direct_shader = 0;
+static GLint character_tint_location = -1;
+static GLint direct_tint_location = -1;
 
 static GLuint vertex_array = 0;
 static GLuint vertex_buffer = 0;
@@ -92,6 +103,112 @@ static GLVertex* vertices = NULL;
 static GLTexture textures[FL_TEXTURE_MAX] = { 0 };
 static GLuint palettes[FL_PALETTE_MAX] = { 0 };
 static GLTextureSpec latest_texture_spec = { 0 };
+
+typedef struct CharacterFrame {
+    Uint16 page, x, y, width, height;
+    float left, top, world_width, world_height;
+    bool present;
+} CharacterFrame;
+static CharacterFrame character_frames[65536];
+static GLTextureSpec character_pages[16];
+static GLTextureSpec character_hud;
+static int hud_part;
+static Uint8 character_chips[QUADS_MAX];
+static GLQuad last_quads[QUADS_MAX];
+static int last_quad_count;
+static bool original_game, replaying;
+static void OpenGLRenderer_RenderFrame(SDL_Rect viewport);
+
+static Uint16 read16(const Uint8* p) { return p[0] | (p[1] << 8); }
+static Uint32 read32(const Uint8* p) { return read16(p) | ((Uint32)read16(p + 2) << 16); }
+
+static bool load_characters(void) {
+    size_t size;
+    Uint8* manifest = SDL_LoadFile("/characters/suits.bin", &size);
+    if (!manifest || size < 12 || SDL_memcmp(manifest, "M37H", 4)) {
+        SDL_free(manifest);
+        SDL_LogError(SDL_LOG_CATEGORY_RENDER, "Character atlas manifest is missing or invalid");
+        return false;
+    }
+    const Uint32 count = read32(manifest + 4), pages = read32(manifest + 8);
+    if (pages > SDL_arraysize(character_pages) || size != 12 + count * 20) {
+        SDL_free(manifest);
+        return false;
+    }
+    for (Uint32 i = 0; i < count; i++) {
+        const Uint8* p = manifest + 12 + i * 20;
+        CharacterFrame* frame = &character_frames[read16(p)];
+        *frame = (CharacterFrame){.page=read16(p+2), .x=read16(p+4), .y=read16(p+6),
+            .width=read16(p+8), .height=read16(p+10), .left=(Sint16)read16(p+12)/64.0f,
+            .top=(Sint16)read16(p+14)/64.0f, .world_width=(Sint16)read16(p+16)/64.0f,
+            .world_height=(Sint16)read16(p+18)/64.0f, .present=true};
+        if (frame->page >= pages || frame->x + frame->width > 2048 || frame->y + frame->height > 2048) {
+            SDL_free(manifest);
+            return false;
+        }
+    }
+    SDL_free(manifest);
+    for (Uint32 page = 0; page < pages; page++) {
+        char path[80];
+        SDL_snprintf(path, sizeof(path), "/characters/suits-%u.png", page);
+        SDL_Surface* source = SDL_LoadPNG(path);
+        SDL_Surface* surface = source ? SDL_ConvertSurface(source, SDL_PIXELFORMAT_RGBA32) : NULL;
+        SDL_DestroySurface(source);
+        if (!surface) { SDL_LogError(SDL_LOG_CATEGORY_RENDER, "Could not load %s: %s", path, SDL_GetError()); return false; }
+        // The custom artwork uses the same crisp pixel sampling as the game.
+        GLTextureSpec* spec = &character_pages[page];
+        glGenTextures(1, &spec->texture.handle);
+        glBindTexture(GL_TEXTURE_2D, spec->texture.handle);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, surface->w, surface->h, 0, GL_RGBA, GL_UNSIGNED_BYTE, surface->pixels);
+        spec->texture.width = surface->w; spec->texture.height = surface->h;
+        spec->texture.palette_type = PALETTE_NONE;
+        SDL_DestroySurface(surface);
+    }
+    SDL_Surface* source = SDL_LoadPNG("/characters/hud.png");
+    SDL_Surface* surface = source ? SDL_ConvertSurface(source, SDL_PIXELFORMAT_RGBA32) : NULL;
+    SDL_DestroySurface(source);
+    if (!surface || surface->w != 128 || surface->h != 32) {
+        SDL_DestroySurface(surface);
+        SDL_LogError(SDL_LOG_CATEGORY_RENDER, "Character HUD atlas is missing or invalid");
+        return false;
+    }
+    glGenTextures(1, &character_hud.texture.handle);
+    glBindTexture(GL_TEXTURE_2D, character_hud.texture.handle);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, surface->w, surface->h, 0, GL_RGBA, GL_UNSIGNED_BYTE, surface->pixels);
+    character_hud.texture.width = surface->w;
+    character_hud.texture.height = surface->h;
+    SDL_DestroySurface(surface);
+    return true;
+}
+
+void Moment_CharacterBeginFrame(void) { SDL_zero(character_chips); }
+void Moment_HudBegin(int part) { hud_part = part; }
+void Moment_HudEnd(void) { hud_part = 0; }
+
+EMSCRIPTEN_KEEPALIVE int web_original(int enabled) {
+    original_game = enabled != 0;
+    // Replay the last draw list, including both art variants, without a game tick.
+    // This also updates the artwork immediately while paused or before Start.
+    if (window && last_quad_count) {
+        arrsetlen(quads, last_quad_count);
+        SDL_memcpy(quads, last_quads, last_quad_count * sizeof(GLQuad));
+        int width, height; SDL_GetWindowSizeInPixels(window, &width, &height);
+        replaying = true;
+        OpenGLRenderer_RenderFrame((SDL_Rect){0, 0, width, height});
+        replaying = false;
+    }
+    return original_game;
+}
 
 static const char* read_shader(const char* filename) {
     const char* base_path = SDL_GetBasePath();
@@ -228,6 +345,53 @@ static void quad_infer_tex_coords(GLQuad* quad) {
     quad->tex_coords[1].t = quad->tex_coords[0].t;
     quad->tex_coords[2].s = quad->tex_coords[0].s;
     quad->tex_coords[2].t = quad->tex_coords[3].t;
+}
+
+void Moment_CharacterQueued(WORK* wk, int first_chip, int last_chip) {
+    // Shadow passes start another native chip list within the same game frame.
+    if (first_chip == 0) SDL_zero(character_chips);
+    int character = wk == &plw[0].wu ? 1 : wk == &plw[1].wu ? 2 : 0;
+    if (!character) {
+        character = wk->cg_number >= 14656 && wk->cg_number < 15712 ? 1 :
+            wk->cg_number >= 19456 && wk->cg_number < 21120 ? 2 : 0;
+    }
+    const CharacterFrame* frame = &character_frames[wk->cg_number];
+    if (!character || !frame->present || last_chip <= first_chip) return;
+    for (int i = first_chip; i < last_chip && i < QUADS_MAX; i++) character_chips[i] = character;
+    SDL_assert(arrlen(quads) < QUADS_MAX);
+    GLQuad* quad = arraddnptr(quads, 1);
+    SDL_zero(*quad);
+    const int flip = wk->cg_flip ^ wk->rl_flag;
+    const float left = flip & 1 ? -frame->left - frame->world_width : frame->left;
+    const float top = flip & 2 ? -frame->top - frame->world_height : frame->top;
+    Vec3 points[2] = {{left, -top, 0}, {left + frame->world_width, -top - frame->world_height, 0}};
+    njCalcPoints(NULL, points, points, 2);
+    quad->positions[0] = (GLVec2){convert_to_screen_x(points[0].x), convert_to_screen_y(points[0].y)};
+    quad->positions[3] = (GLVec2){convert_to_screen_x(points[1].x), convert_to_screen_y(points[1].y)};
+    quad_infer_positions(quad);
+    const float s0 = frame->x / 2048.0f, s1 = (frame->x + frame->width) / 2048.0f;
+    const float t0 = frame->y / 2048.0f, t1 = (frame->y + frame->height) / 2048.0f;
+    quad->tex_coords[0] = (GLTexCoord){flip & 1 ? s1 : s0, flip & 2 ? t1 : t0};
+    quad->tex_coords[3] = (GLTexCoord){flip & 1 ? s0 : s1, flip & 2 ? t0 : t1};
+    quad_infer_tex_coords(quad);
+    quad->texture_spec = character_pages[frame->page];
+    quad->z = seqs_w.chip[first_chip].v[0].z;
+    quad->color = convert_color(curr_bright | ((0xFF - wk->my_clear_level) << 24));
+    quad->index = arrlen(quads);
+    quad->character = character;
+    quad->custom = true;
+    const Uint16* normal = ColorRAM[(character - 1) * 16];
+    const Uint16* current = ColorRAM[wk->current_colcd & 511];
+    float difference = 0, r = 0, g = 0, b = 0;
+    for (int i = 1; i < 64; i++) {
+        const float cr = (current[i] & 31) / 31.0f, cg = ((current[i] >> 5) & 31) / 31.0f,
+            cb = ((current[i] >> 10) & 31) / 31.0f;
+        r += cr; g += cg; b += cb;
+        difference += SDL_fabsf(cr - (normal[i] & 31) / 31.0f) +
+            SDL_fabsf(cg - ((normal[i] >> 5) & 31) / 31.0f) +
+            SDL_fabsf(cb - ((normal[i] >> 10) & 31) / 31.0f);
+    }
+    quad->character_tint = (GLColor){r / 63, g / 63, b / 63, SDL_min(.85f, difference / 100)};
 }
 
 static void OpenGLRenderer_CreateTexture(unsigned int th) {
@@ -403,6 +567,7 @@ static void OpenGLRenderer_DrawTexturedQuad(const Sprite* sprite, unsigned int c
     SDL_assert(arrlen(quads) < QUADS_MAX);
 
     GLQuad* quad = arraddnptr(quads, 1);
+    SDL_zero(*quad);
 
     for (int i = 0; i < 4; i++) {
         quad->positions[i].x = convert_to_screen_x(sprite->v[i].x);
@@ -421,6 +586,7 @@ static void OpenGLRenderer_DrawSprite(const Sprite* sprite, unsigned int color) 
     SDL_assert(arrlen(quads) < QUADS_MAX);
 
     GLQuad* quad = arraddnptr(quads, 1);
+    SDL_zero(*quad);
 
     quad->positions[0].x = convert_to_screen_x(sprite->v[0].x);
     quad->positions[0].y = convert_to_screen_y(sprite->v[0].y);
@@ -438,12 +604,34 @@ static void OpenGLRenderer_DrawSprite(const Sprite* sprite, unsigned int color) 
     quad->index = arrlen(quads);
     quad->color = convert_color(color);
     quad->texture_spec = latest_texture_spec;
+
+    if (hud_part >= 1 && hud_part <= 4) {
+        // Both variants share native placement, depth, visibility and brightness.
+        // Selection happens at render time, including paused-frame replays.
+        quad->character = 3;
+        GLQuad custom = *quad;
+        const int x = hud_part == 1 ? 0 : hud_part == 2 ? 40 : 80;
+        const int y = hud_part == 4 ? 8 : 0;
+        const int height = hud_part <= 2 ? 24 : 8;
+        custom.custom = true;
+        custom.texture_spec = character_hud;
+        custom.tex_coords[0] = (GLTexCoord){x / 128.0f, y / 32.0f};
+        custom.tex_coords[3] = (GLTexCoord){(x + 40) / 128.0f, (y + height) / 32.0f};
+        quad_infer_tex_coords(&custom);
+        SDL_assert(arrlen(quads) < QUADS_MAX);
+        custom.index = arrlen(quads) + 1;
+        arrput(quads, custom);
+    }
 }
 
 static void OpenGLRenderer_DrawSprite2(const Sprite2* sprite2) {
     SDL_assert(arrlen(quads) < QUADS_MAX);
 
     GLQuad* quad = arraddnptr(quads, 1);
+    SDL_zero(*quad);
+    const uintptr_t start = (uintptr_t)seqs_w.chip, at = (uintptr_t)sprite2;
+    if (at >= start && at < start + seqs_w.sprTotal * sizeof(Sprite2))
+        quad->character = character_chips[(at - start) / sizeof(Sprite2)];
 
     quad->positions[0].x = convert_to_screen_x(sprite2->v[0].x);
     quad->positions[0].y = convert_to_screen_y(sprite2->v[0].y);
@@ -467,6 +655,7 @@ static void OpenGLRenderer_DrawSolidQuad(const Quad* quad, unsigned int color) {
     SDL_assert(arrlen(quads) < QUADS_MAX);
 
     GLQuad* _quad = arraddnptr(quads, 1);
+    SDL_zero(*_quad);
 
     for (int i = 0; i < 4; i++) {
         _quad->positions[i].x = convert_to_screen_x(quad->v[i].x);
@@ -576,6 +765,7 @@ static SDL_Window* OpenGLRenderer_Init(const SDLRenderBackendInitInfo* init_info
     glUseProgram(palette_8_shader);
     glUniform1i(glGetUniformLocation(palette_8_shader, "uPalette"), 0);
     glUniform1i(glGetUniformLocation(palette_8_shader, "uIndexTex"), 1);
+    character_tint_location = glGetUniformLocation(palette_8_shader, "uCharacterTint");
 
     direct_shader = build_shader_program("vert.glsl", "frag_direct.glsl");
 
@@ -590,6 +780,7 @@ static SDL_Window* OpenGLRenderer_Init(const SDLRenderBackendInitInfo* init_info
 
     glUseProgram(direct_shader);
     glUniform1i(glGetUniformLocation(direct_shader, "uTexture"), 0);
+    direct_tint_location = glGetUniformLocation(direct_shader, "uCharacterTint");
 
     // Setup vertex data and buffers
 
@@ -631,6 +822,11 @@ static SDL_Window* OpenGLRenderer_Init(const SDLRenderBackendInitInfo* init_info
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 
+    if (!load_characters()) {
+        SDL_LogError(SDL_LOG_CATEGORY_RENDER, "Custom character artwork could not be initialized");
+        return NULL;
+    }
+
     // Misc
 
     glEnable(GL_BLEND);
@@ -648,6 +844,10 @@ static void OpenGLRenderer_Quit() {
 static void OpenGLRenderer_RenderFrame(SDL_Rect viewport) {
     extern int web_skip_render;
     if (web_skip_render) { arrsetlen(quads,0); return; }
+    if (!replaying) {
+        last_quad_count = arrlen(quads);
+        SDL_memcpy(last_quads, quads, last_quad_count * sizeof(GLQuad));
+    }
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glBindVertexArray(vertex_array);
     glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
@@ -677,6 +877,7 @@ static void OpenGLRenderer_RenderFrame(SDL_Rect viewport) {
 
     for (int i = 0; i < arrlen(quads); i++) {
         const GLQuad* quad = &quads[i];
+        if (quad->character && (original_game ? quad->custom : !quad->custom)) continue;
 
         if (quad->texture_spec.texture.handle == 0) {
             glUseProgram(solid_shader);
@@ -695,6 +896,8 @@ static void OpenGLRenderer_RenderFrame(SDL_Rect viewport) {
             case PALETTE_8:
                 SDL_assert(quad->texture_spec.palette != 0);
                 glUseProgram(palette_8_shader);
+                glUniform4f(character_tint_location,
+                    quad->character_tint.r, quad->character_tint.g, quad->character_tint.b, quad->character_tint.a);
                 glActiveTexture(GL_TEXTURE0);
                 glBindTexture(GL_TEXTURE_2D, quad->texture_spec.palette);
                 glActiveTexture(GL_TEXTURE1);
@@ -703,6 +906,8 @@ static void OpenGLRenderer_RenderFrame(SDL_Rect viewport) {
 
             case PALETTE_NONE:
                 glUseProgram(direct_shader);
+                glUniform4f(direct_tint_location,
+                    quad->character_tint.r, quad->character_tint.g, quad->character_tint.b, quad->character_tint.a);
                 glActiveTexture(GL_TEXTURE0);
                 glBindTexture(GL_TEXTURE_2D, quad->texture_spec.texture.handle);
                 break;
@@ -727,6 +932,7 @@ static void OpenGLRenderer_RenderFrame(SDL_Rect viewport) {
 
     glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(screen_vertices), screen_vertices);
     glUseProgram(direct_shader);
+    glUniform4f(direct_tint_location, 0, 0, 0, 0);
     glDisable(GL_BLEND);
     glDisable(GL_DEPTH_TEST);
 

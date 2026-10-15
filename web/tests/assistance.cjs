@@ -10,7 +10,7 @@ assert.deepEqual(reference,golden,'The guide and external macro must use the sam
 const context=vm.createContext({});vm.runInContext(fs.readFileSync('web/dist/assistance.js','utf8'),context);
 context.reference=reference;
 const cues=JSON.parse(vm.runInContext('JSON.stringify(momentGuideCues(reference))',context));
-assert.deepEqual(cues.filter(c=>c.lane==='attack').map(c=>[c.frame,c.glyph,c.key]),[[472,'HK','D'],[494,'MK','S'],[502,'MP','X'],[514,'LK','A']]);
+assert.deepEqual(cues.filter(c=>c.lane==='attack').map(c=>[c.frame,c.glyph,c.key]),[[472,'CF','D'],[494,'CM','S'],[502,'SM','X'],[514,'CL','A']]);
 assert.deepEqual(cues.filter(c=>c.kind==='parry').map(c=>c.frame),golden.expected_parries.map(f=>f-4));
 assert.equal(cues.find(c=>c.ordinal===15).frame,441,'Place the airborne input near the middle of its ten-frame window');
 for(const cue of cues.filter(c=>c.kind==='parry')){
@@ -70,7 +70,7 @@ for(let f=0;f<=Math.max(...Object.keys(reference.inputs).map(Number))+1;f++){
   const paused=await page.evaluate(()=>({frame:moment37.assistance.displayFrame,positions:[...document.querySelectorAll('.guide-note')].map(el=>el.style.transform)}));
   await page.waitForTimeout(120);
   assert.deepEqual(await page.evaluate(()=>({frame:moment37.assistance.displayFrame,positions:[...document.querySelectorAll('.guide-note')].map(el=>el.style.transform)})),paused);
-  assert.equal(await page.locator('#guide-next').innerText(),'Paused');
+  assert.equal(await page.locator('#guide-next').innerText(),'Pausado');
   await page.click('#assistance');await page.click('#assistance');assert.equal(await page.evaluate(()=>moment37.engine._web_value(2)),446,'Toggling assistance does not alter physics or input clocks');
   await page.keyboard.press('KeyR');await page.waitForFunction(()=>moment37.state.status===2&&moment37.assistance.frame===0,null,{polling:10});
   assert.equal(await page.locator('#assistance').getAttribute('aria-pressed'),'true','Retry preserves the assistance choice');
@@ -81,7 +81,7 @@ for(let f=0;f<=Math.max(...Object.keys(reference.inputs).map(Number))+1;f++){
    update();return{stopped,state:assistanceGuide.state,engineFrame:e._web_value(2)};
   });
   assert.equal(failure.stopped,154);assert.equal(failure.state.displayFrame,154);assert.ok(failure.engineFrame>154);
-  assert.equal(await page.locator('#guide-next').innerText(),'Sequence missed');
+  assert.equal(await page.locator('#guide-next').innerText(),'Sequência interrompida');
   const targetChecks=await page.evaluate(()=>{
    const e=moment37.engine;e._web_reset();e._web_start();assistanceGuide.reset();assistanceGuide.observe(e);e._web_render(0);const checks=[];
    for(let f=0;f<=Math.max(...Object.keys(reference.inputs).map(Number))+1;f++){
@@ -108,7 +108,7 @@ for(let f=0;f<=Math.max(...Object.keys(reference.inputs).map(Number))+1;f++){
    return result;
   });
   for(const run of runs){assert.equal(run.status,4);assert.equal(run.ken,1);assert.equal(run.chun,-1);assert.equal(run.parries,15);assert.deepEqual(run.events,golden.expected_parries);assert.equal(run.desynced,false);}
-  assert.equal(await page.locator('#guide-next').innerText(),'Challenge complete');
+  assert.equal(await page.locator('#guide-next').innerText(),'Desafio concluído');
   const finishFailure=await page.evaluate(()=>{
    const e=moment37.engine,inputs={...reference.inputs};inputs[514]=inputs[515]=4;
    e._web_reset();e._web_start();assistanceGuide.reset();let stopped;
@@ -119,17 +119,17 @@ for(let f=0;f<=Math.max(...Object.keys(reference.inputs).map(Number))+1;f++){
    update();return{stopped,state:moment37.assistance,finish:moment37.finish};
   });
   assert.equal(finishFailure.state.finishFailed,true);assert.equal(finishFailure.state.displayFrame,finishFailure.stopped);
-  assert.equal(await page.locator('#guide-next').innerText(),'Finish missed');
-  assert.equal(await page.locator('#overlay-tag').innerText(),'FINISH MISSED');
-  assert.match(await page.locator('#overlay-copy').innerText(),/medium Shoryuken.*first uppercut hit.*Press R to retry/);
+  assert.equal(await page.locator('#guide-next').innerText(),'Contra-ataque falhou');
+  assert.equal(await page.locator('#overlay').innerText(),'Tentar novamente');
+  assert.equal(await page.locator('#overlay-copy').isVisible(),false);
   await page.evaluate(()=>{assistanceGuide.reset();assistanceGuide.observe({_web_value:k=>k===2?150:k===5?1:0,_web_status:()=>2});assistanceGuide.render();});
-  assert.equal(await page.locator('#guide-next').innerText(),'Rhythm changed','Non-reference contact timing must stop misleading future cues');
+  assert.equal(await page.locator('#guide-next').innerText(),'O ritmo mudou','Non-reference contact timing must stop misleading future cues');
   await page.keyboard.press('KeyR');await page.waitForFunction(()=>moment37.state.status===2&&moment37.assistance.frame===0,null,{polling:10});
   await page.evaluate(()=>{
    advanceGuideTo(180);
    assistanceGuide.render({controller:true});
   });
-  assert.equal(await page.locator('#guide-legend').innerText(),'HK → MK → MP → LK · controller');
+  assert.equal(await page.locator('#guide-legend').innerText(),'CF → CM → SM → CL · controle');
   await page.evaluate(()=>assistanceGuide.render({controller:false}));
   const frameBeforeToggle=await page.evaluate(()=>moment37.engine._web_value(2));
   await page.locator('#assistance').focus();await page.keyboard.press('Space');assert.equal(await page.evaluate(()=>moment37.assistance.enabled),false);

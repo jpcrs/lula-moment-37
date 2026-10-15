@@ -1,0 +1,35 @@
+{
+  "description": "Native idle feature displacements in game pixels, relative to each approved master. Ken head/gloves and Chun-Li face/fists measured from the original indexed drawings; waist/knees registered against native cloth patches. Feet remain planted. No animation timing is changed.",
+  "pl11": {
+    "project": "hat-fighter-native", "master": 14665,
+    "neck": -81, "waist": -43, "knee": -27, "ankle": -9,
+    "hands": [[-24, -70, -9, -54], [-1, -80, 14, -65]],
+    "frames": {
+      "14657": {"head": [0,6], "hands": [[0,4],[0,9]], "waist": [0,4], "knees": [[0,3],[0,2]]},
+      "14658": {"head": [0,5], "hands": [[0,3],[0,9]], "waist": [0,4], "knees": [[0,3],[0,3]]},
+      "14659": {"head": [0,1], "hands": [[0,1],[0,1]], "waist": [0,1], "knees": [[0,3],[0,0]]},
+      "14660": {"head": [0,-1], "hands": [[0,-3],[0,-2]], "waist": [0,-1], "knees": [[0,0],[0,-1]]},
+      "14661": {"head": [0,-2], "hands": [[0,-4],[0,-2]], "waist": [0,-2], "knees": [[0,-1],[0,-2]]},
+      "14662": {"head": [0,-2], "hands": [[0,-4],[0,-2]], "waist": [0,-3], "knees": [[0,-2],[0,-3]]},
+      "14663": {"head": [0,-2], "hands": [[0,-3],[0,-1]], "waist": [0,-3], "knees": [[0,-2],[0,-3]]},
+      "14664": {"head": [0,-1], "hands": [[0,-2],[0,0]], "waist": [0,-1], "knees": [[0,-1],[0,-1]]},
+      "14665": {"head": [0,0], "hands": [[0,0],[0,0]], "waist": [0,0], "knees": [[0,0],[0,0]]},
+      "14666": {"head": [0,4], "hands": [[0,2],[0,4]], "waist": [0,4], "knees": [[0,3],[0,1]]}
+    }
+  },
+  "pl16": {
+    "project": "gray-fighter-native", "master": 19474,
+    "neck": -75, "waist": -43, "knee": -26, "ankle": -9,
+    "hands": [[-43, -79, -29, -61], [-18, -74, -7, -59]],
+    "frames": {
+      "19472": {"head": [0,-1], "hands": [[1,-3],[1,-2]], "waist": [0,-1], "knees": [[0,0],[0,-1]]},
+      "19473": {"head": [0,-1], "hands": [[1,-1],[1,-2]], "waist": [0,-1], "knees": [[0,0],[0,-1]]},
+      "19474": {"head": [0,0], "hands": [[0,0],[0,0]], "waist": [0,0], "knees": [[0,0],[0,0]]},
+      "19475": {"head": [0,1], "hands": [[-1,2],[-1,1]], "waist": [0,1], "knees": [[0,1],[0,1]]},
+      "19476": {"head": [0,2], "hands": [[-1,4],[-2,1]], "waist": [0,2], "knees": [[0,1],[0,2]]},
+      "19477": {"head": [0,2], "hands": [[-2,6],[-2,1]], "waist": [0,2], "knees": [[0,1],[0,2]]},
+      "19478": {"head": [0,-1], "hands": [[1,-3],[1,-2]], "waist": [0,-1], "knees": [[0,0],[0,-1]], "blink": true},
+      "19479": {"head": [0,-1], "hands": [[1,-1],[1,-2]], "waist": [0,-1], "knees": [[0,0],[0,-1]], "blink": true}
+    }
+  }
+}

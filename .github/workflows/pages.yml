@@ -31,7 +31,7 @@ jobs:
       # Only the ready-to-play static bundle is needed for Pages.
       - name: Check deployment files
         run: |
-          for file in index.html engine.js engine.wasm engine.data timing.js touch.js app.js audio.js assistance.js guide-sequence.json style.css manifest.webmanifest images/app-icon-180.png images/app-icon-192.png images/app-icon-512.png audio/evo-moment37.wav LICENSE-3SX.txt; do
+          for file in index.html engine.js engine.wasm engine.data timing.js touch.js app.js audio.js assistance.js guide-sequence.json style.css manifest.webmanifest images/app-icon-180.png images/app-icon-192.png images/app-icon-512.png images/win-photo.png characters/hud.png characters/suits.bin characters/suits-0.png characters/suits-1.png characters/suits-2.png characters/suits-3.png characters/suits-4.png characters/suits-5.png audio/evo-moment37.wav LICENSE-3SX.txt; do
             test -s "web/dist/$file" || { echo "Missing deployment file: $file" >&2; exit 1; }
           done
 

@@ -62,3 +62,29 @@ for kind,ctype in [('TSB','SoundEvent*'),('PHD','s8*')]:
     sound=re.sub(r'(?:SoundEvent\*|s8\*) cse'+kind+r'DataTable\[21\] = \{.*?\};',
         ctype+' cse'+kind+'DataTable[21] = { [0] = '+kind+'_SE, [12] = '+kind+'_PL11, [16] = '+kind+'_PL15 };',sound,flags=re.S)
 (OUT/'sound_scene.c').write_text(sound)
+
+# Tag player draw requests for the optional character artwork. The original
+# renderer still runs in full, keeping cache updates and priority calculations.
+art=(ROOT/'3sx/src/sf33rd/Source/Game/rendering/aboutspr.c').read_text()
+art='#include "character_renderer.h"\n#include "sf33rd/Source/Game/rendering/mtrans.h"\n'+art
+original=function(art,'Mtrans_use_trans_mode')
+hooked=original.replace('    switch (mts[wk->my_mts].mode) {',
+    '    const int first_chip = seqs_w.sprTotal;\n    switch (mts[wk->my_mts].mode) {')
+hooked=hooked[:-1]+'    Moment_CharacterQueued(wk, first_chip, seqs_w.sprTotal);\n}'
+art=art.replace(original,hooked)
+(OUT/'aboutspr_scene.c').write_text(art)
+
+# Identify HUD artwork at its source instead of matching texture handles or
+# screen coordinates. The rest of the native HUD, including gauges, is verbatim.
+hud=(ROOT/'3sx/src/sf33rd/Source/Game/ui/sc_sub.c').read_text()
+hud='#include "character_renderer.h"\n'+hud
+for name,call,parts in [('player_name','scfont_sqput',[3,4]),('player_face','scfont_sqput_face',[1,2,2])]:
+    original=function(hud,name)
+    calls=list(re.finditer(r'    '+call+r'\([\s\S]*?\);',original))
+    assert len(calls)==len(parts), (name,len(calls))
+    hooked=original
+    for match,part in reversed(list(zip(calls,parts))):
+        replacement=f'    Moment_HudBegin({part});\n'+match.group()+ '\n    Moment_HudEnd();'
+        hooked=hooked[:match.start()]+replacement+hooked[match.end():]
+    hud=hud.replace(original,hooked)
+(OUT/'sc_sub_scene.c').write_text(hud)

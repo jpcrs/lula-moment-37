@@ -27,25 +27,25 @@ class MomentAudio {
   unlock() {
     this.configureSession();
     if(!this.context)return Promise.resolve();
-    if(this.context.state==='closed')return Promise.reject(new Error('Audio was closed by the browser. Reload to restore sound.'));
+    if(this.context.state==='closed')return Promise.reject(new Error('O navegador encerrou o áudio. Recarregue a página para restaurar o som.'));
     // Start a zero-valued sample inside the user gesture to prime mobile audio.
     if(!this.primed||this.context.state!=='running'){
       const source=this.context.createBufferSource();source.buffer=this.context.createBuffer(1,1,this.context.sampleRate);
       source.connect(this.context.destination);source.onended=()=>source.disconnect();source.start();this.primed=true;
     }
     const resumed=this.context.state==='interrupted'?this.context.suspend().then(()=>this.context.resume()):this.context.state==='running'?Promise.resolve():this.context.resume();
-    return resumed.then(()=>{if(this.context.state!=='running')throw new Error('Audio is still interrupted. Tap Resume again when it is available.');});
+    return resumed.then(()=>{if(this.context.state!=='running')throw new Error('O áudio continua interrompido. Toque em Continuar quando estiver disponível.');});
   }
   setVolume(value) {
     const percent=Math.max(0,Math.min(100,Number(value)));
     this.volumeValue.value=`${percent}%`;
-    this.volume.setAttribute('aria-valuetext',`${percent} percent`);
+    this.volume.setAttribute('aria-valuetext',`${percent} por cento`);
     if(this.gameGain){if(this.context.state==='running')this.gameGain.gain.setTargetAtTime(percent/100,this.context.currentTime,.01);else this.gameGain.gain.value=percent/100;}
   }
   setEvoVolume(value) {
     const percent=Math.max(0,Math.min(100,Number(value)));
     this.enabled=percent>0;this.evoVolume.value=percent;this.evoValue.value=`${percent}%`;
-    this.evoVolume.setAttribute('aria-valuetext',`${percent} percent`);
+    this.evoVolume.setAttribute('aria-valuetext',`${percent} por cento`);
     if(this.evoGain){
       const gain=this.evoGain.gain,time=this.context.currentTime;gain.cancelScheduledValues(time);
       if(this.context.state==='running'&&this.source)gain.setTargetAtTime(percent/100,time,.01);
@@ -59,7 +59,7 @@ class MomentAudio {
     this.status='loading';this.evoVolume.setAttribute('aria-busy','true');
     this.loading=(async()=>{
       const response=await fetch('audio/evo-moment37.wav');
-      if(!response.ok)throw new Error('The Evo audio track could not be loaded.');
+      if(!response.ok)throw new Error('Não foi possível carregar o áudio da torcida.');
       const bytes=await response.arrayBuffer();
       this.buffer=await this.context.decodeAudioData(bytes);
       this.status=this.enabled?'ready':'off';return this.buffer;

@@ -1,8 +1,9 @@
 {
   "id": "./",
-  "name": "Evo Moment #37",
-  "short_name": "Moment 37",
-  "description": "The fifteen-parry challenge, powered by the original 3rd Strike engine.",
+  "lang": "pt-BR",
+  "name": "Lula Moment #37",
+  "short_name": "Lula Moment #37",
+  "description": "Defenda os quinze chutes e vire a luta no Lula Moment #37.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
